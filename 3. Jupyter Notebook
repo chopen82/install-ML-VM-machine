@@ -1,0 +1,79 @@
+
+jupyter notebook --generate-config
+
+c.NotebookApp.password = u'YOUR_HASHED_PASSWORD_HERE'
+c.NotebookApp.allow_origin = '*'
+c.NotebookApp.port = 8888
+c.NotebookApp.open_browser = False
+c.NotebookApp.allow_remote_access = True
+c.NotebookApp.trust_xheaders = True
+# These changes are not necessary, but I prefer to do them
+c.NotebookApp.custom_display_url = 'jupyter.example.com'
+c.NotebookApp.quit_button = False
+
+sudo vim /etc/nginx/sites-enabled/default
+
+server {
+listen 443 ssl default_server;
+listen [::]:443 ssl default_server;
+# Replace with path to your SSL certificate
+ssl_certificate     /etc/letsencrypt/live/jupyter.EXAMPLE.COM/fullchain.pem;
+# Replace with path to SSL private key
+ssl_certificate_key /etc/letsencrypt/live/jupyter.EXAMPLE.COM/privkey.pem;
+ssl_protocols       TLSv1 TLSv1.1 TLSv1.2;
+ssl_ciphers         HIGH:!aNULL:!MD5;
+
+# you don't have to change these
+root /var/www/html;
+index index.html index.htm index.nginx-debian.html;
+# here, set your domain name if existing
+server_name jupyter.EXAMPLE.COM;
+# The following lines configure the proxy server
+location  / {
+proxy_pass http://127.0.0.1:8888/;
+proxy_http_version 1.1;
+proxy_set_header Upgrade $http_upgrade;
+proxy_set_header Connection "Upgrade";
+proxy_set_header Host $host;
+proxy_read_timeout 86400;
+proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+}
+}
+
+sudo systemctl restart nginx
+
+Commands to set up certbot:
+sudo apt install software-properties-common && sudo apt update
+sudo add-apt-repository ppa:certbot/certbot
+sudo apt update
+sudo apt install -y python-certbot-nginx
+sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
+sudo service nginx restart
+
+
+
+
+Code snippet for wp_config.php:
+if ($_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https')
+    $_SERVER['HTTPS']='on';
+
+if (isset($_SERVER['HTTP_X_FORWARDED_HOST'])) {
+    $_SERVER['HTTP_HOST'] = $_SERVER['HTTP_X_FORWARDED_HOST'];
+}
+
+Code snippet for nginx configuration:
+server {
+root /var/www/html;
+        listen 80; 
+        listen [::]:80;
+        server_name yourdomain.com www.yourdomain.com;
+        location / {
+            proxy_pass         http://127.0.0.1:8080;
+            proxy_redirect     off;
+            proxy_set_header   Host $host;
+            proxy_set_header   X-Real-IP $remote_addr;
+            proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header   X-Forwarded-Host $server_name;
+            proxy_set_header   X-Forwarded-Proto $scheme;
+        }
+}
