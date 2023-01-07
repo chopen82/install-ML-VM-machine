@@ -1,3 +1,19 @@
 #Ubuntu 22.04 or smthg
 wget https://repo.anaconda.com/miniconda/Miniconda3-py310_22.11.1-1-Linux-x86_64.sh # or any latest miniconda
 bash Miniconda3-py310_22.11.1-1-Linux-x86_64.sh #install bunch of stuff including python 3.10
+conda install -y jupyter
+conda create --name torch python=3.10
+conda activate torch
+git clone https://github.com/jeffheaton/t81_558_deep_learning.git
+cd t81_558_deep_learning/
+conda env update --file tools.yml  #will install bunch of ML libraries
+   
+#further steps inside (torch) env
+conda install nb_conda
+#cpu only
+conda install pytorch -c pytorch
+#cpu and gpu
+conda install pytorch cudatoolkit -c pytorch
+conda env update --file tools.yml
+python -m ipykernel install --user --name pytorch --display-name "Python 3.10 (pytorch)"
+jupyter notebook
